@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hollow thread · 보안 테스트용 쇼핑몰</title>
+<style>
+:root{--ink:#16181d;--mute:#6b717c;--line:#e3e5e9;--soft:#f1f2f4;--accent:#1f3a5f;--bad:#b3261e;--ok:#1d7a46;--bg:#fff}
+@media(prefers-color-scheme:dark){:root{--ink:#eceef1;--mute:#9aa1ad;--line:#2b2f37;--soft:#1d2026;--accent:#8fb3e8;--bg:#121418}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:24px;padding:18px 32px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+.logo{font-size:22px;font-weight:700;letter-spacing:-.5px}
+nav{display:flex;gap:18px;margin-left:auto;align-items:center;color:var(--mute)}
+.admin-link{padding:8px 13px;border:1px solid var(--ink);border-radius:6px;font-size:13px;font-weight:600;white-space:nowrap}.admin-link:hover{background:var(--ink);color:var(--bg)}
+nav a:hover,nav a.on{color:var(--ink)}
+.who{font-size:13px;color:var(--mute)}
+.hid{opacity:.12;padding:0 6px;cursor:pointer;background:none;border:0}
+.hid:hover{opacity:.6}
+main{max-width:1080px;margin:0 auto;padding:32px}
+.hero{padding:56px 0 36px}
+.hero h1{font-size:44px;line-height:1.2;letter-spacing:-1.5px;margin:0 0 12px;max-width:560px}
+.hero p{color:var(--mute);margin:0;max-width:440px}
+.search{display:flex;gap:8px;margin:8px 0 12px}
+.search input{flex:1;padding:11px 14px;border:1px solid var(--line);background:var(--bg);border-radius:6px}
+.btn{padding:11px 20px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:6px;cursor:pointer}
+.btn.ghost{background:none;color:var(--ink)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.info{color:var(--mute);min-height:24px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:28px 22px}
+.card{cursor:pointer}
+.tile{aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;border-radius:4px}
+.tile svg{width:56%;fill:rgba(255,255,255,.82)}
+.card h3{font-size:15px;margin:10px 0 0;font-weight:600}
+.card span{color:var(--mute)}
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:40px}
+.detail h2{font-size:30px;margin:0 0 6px;letter-spacing:-.8px}
+.price{font-size:20px;font-weight:600}
+.rv{border-top:1px solid var(--line);padding:14px 0}
+.rv small{color:var(--mute);margin-left:8px}
+.rv p{margin:4px 0 0}
+form.box{display:grid;gap:10px;max-width:480px}
+form.box input,form.box select,form.box textarea{padding:10px 12px;border:1px solid var(--line);background:var(--bg);border-radius:6px}
+.panel{max-width:420px;margin:30px auto}
+.err{color:var(--bad);min-height:22px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0 28px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:500}
+.tag{padding:2px 8px;border-radius:10px;background:var(--soft);font-size:12px}
+.tag.admin{background:var(--accent);color:var(--bg)}
+footer{text-align:center;color:var(--mute);font-size:12px;padding:40px 16px 90px}
+/* monitor */
+#mon{position:fixed;right:16px;bottom:16px;width:360px;max-width:calc(100vw - 32px);z-index:20}
+#monBtn{width:100%;text-align:left;padding:10px 14px;background:#0f1722;color:#e6edf6;border:0;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between}
+#monBody{display:none;background:#0f1722;color:#cfd8e3;border-radius:8px;margin-bottom:6px;padding:12px;font-size:13px;max-height:70vh;overflow:auto}
+#mon.open #monBody{display:block}
+#monBody input{width:100%;padding:8px;background:#18212e;border:1px solid #2a3647;color:#e6edf6;border-radius:5px;margin:4px 0}
+#monBody .row{display:flex;gap:6px;margin:6px 0}
+#monBody button{background:#24324a;color:#e6edf6;border:0;padding:6px 10px;border-radius:5px;cursor:pointer;font-size:12px}
+#logs{margin-top:8px}
+.lg{border-left:3px solid #e5534b;background:#18212e;padding:6px 8px;margin:6px 0;border-radius:3px;word-break:break-all}
+.lg.info{border-color:#e0a82e}
+.lg b{color:#fff}.lg code{color:#9fd0ff}.lg small{color:#7c8aa0;display:block}
+#wst{font-size:12px;color:#8fa3bd;min-height:16px}
+details{margin-top:8px;color:#8fa3bd}
+@media(max-width:720px){header{padding:14px 16px;gap:10px}main{padding:20px 16px}.detail{grid-template-columns:1fr}.hero h1{font-size:32px}nav{gap:10px;font-size:14px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="#shop">hollow thread</a>
+  <nav id="nav"></nav>
+  <a class="admin-link" href="#admin-gate">관리자 페이지</a>
+</header>
+<main id="app"></main>
+<footer>이 사이트는 교육·모의해킹 실습용으로 의도적인 취약점을 포함합니다. 실제 서비스나 실제 개인정보에 사용하지 마세요.</footer>
+
+<div id="mon">
+  <div id="monBody">
+    <b>Discord Webhook</b>
+    <input id="wh" placeholder="https://discord.com/api/webhooks/...(테스트용 채널 권장)">
+    <div class="row"><button onclick="saveWebhook()">저장</button><button onclick="testWebhook()">테스트 전송</button><button onclick="clearLogs()">로그 지우기</button><button onclick="resetDB()">DB 초기화</button></div>
+    <div id="wst"></div>
+    <div id="logs"></div>
+    <details><summary>실습 힌트</summary>
+      <p>① 검색창: <code>&lt;img src=x onerror=alert(1)&gt;</code><br>② 리뷰 본문에 같은 페이로드 입력(Stored)<br>③ 개발자도구 → Application → localStorage → <code>session</code>의 role을 admin으로 변경<br>④ 주소창에 <code>#admin</code> 직접 입력</p>
+    </details>
+  </div>
+  <button id="monBtn" onclick="document.getElementById('mon').classList.toggle('open')"><span>🛡 Security Monitor</span><span id="cnt">0</span></button>
+</div>
+
+<script>
+/* ===== 모의 DB (localStorage) ===== */
+const DB_KEY='ht_db', SES_KEY='session', LOG_KEY='ht_logs', WH_KEY='ht_webhook';
+const $=s=>document.querySelector(s);
+const won=n=>n.toLocaleString('ko-KR')+'원';
+const ICON={
+  tee:'M30 20 L50 12 Q60 24 70 12 L90 20 L108 44 L90 52 L88 100 L32 100 L30 52 L12 44Z',
+  hoodie:'M34 22 L50 10 Q60 32 70 10 L86 22 L110 86 L94 92 L88 62 L88 104 L32 104 L32 62 L26 92 L10 86Z',
+  pants:'M36 8 L84 8 L92 106 L68 106 L60 40 L52 106 L28 106Z'
+};
+function seed(){return{
+  products:[
+    {id:1,name:'에센셜 코튼 티셔츠',price:29000,color:'#7b8794',icon:'tee',desc:'20수 코튼으로 만든 기본 반팔. 세탁 후에도 형태가 유지됩니다.'},
+    {id:2,name:'오버핏 헤비 후드티',price:69000,color:'#3b4252',icon:'hoodie',desc:'450g 기모 원단의 오버핏 후드. 겨울 내내 입기 좋습니다.'},
+    {id:3,name:'와이드 슬랙스',price:59000,color:'#8a8f98',icon:'pants',desc:'떨어지는 핏의 와이드 슬랙스. 허리 밴딩 설계.'},
+    {id:4,name:'옥스포드 셔츠',price:49000,color:'#5f7f9f',icon:'tee',desc:'두께감 있는 옥스포드 코튼 셔츠. 단독으로도 레이어드로도.'},
+    {id:5,name:'램스울 라운드 니트',price:79000,color:'#8c7b6a',icon:'tee',desc:'부드러운 램스울 혼방 니트. 목 부분이 처지지 않습니다.'},
+    {id:6,name:'코튼 치노 팬츠',price:54000,color:'#66775f',icon:'pants',desc:'워싱 가공한 스트레이트 치노. 사계절 착용 가능.'},
+    {id:7,name:'울 블렌드 롱코트',price:189000,color:'#2d2f34',icon:'hoodie',desc:'울 70% 블렌드 싱글 롱코트. 어깨 라인이 깔끔합니다.'},
+    {id:8,name:'데님 트러커 재킷',price:99000,color:'#40597a',icon:'hoodie',desc:'12oz 데님 원단. 입을수록 색이 자연스럽게 빠집니다.',material:'면 100% · 12oz 데님',fit:'레귤러 핏',care:'찬물 단독 세탁 또는 드라이클리닝',origin:'대한민국'},
+    {id:9,name:'캐시미어 머플러',price:89000,color:'#9b8876',icon:'tee',desc:'가볍고 포근한 캐시미어 혼방 머플러. 두 번 감아도 부담 없는 길이입니다.',material:'캐시미어 10% · 울 90%',fit:'폭 30cm · 길이 180cm',care:'드라이클리닝 권장',origin:'대한민국'},
+    {id:10,name:'코듀로이 셔츠 재킷',price:89000,color:'#8a6850',icon:'hoodie',desc:'잔잔한 골의 코듀로이와 여유로운 실루엣으로 간절기에 가볍게 걸치기 좋습니다.',material:'면 98% · 폴리우레탄 2%',fit:'루즈 핏 · 두께 보통',care:'뒤집어 찬물 세탁',origin:'대한민국'},
+    {id:11,name:'메리노 울 비니',price:39000,color:'#59645c',icon:'tee',desc:'부드러운 메리노 울 니트 비니. 접어 쓰거나 자연스럽게 내려 연출할 수 있습니다.',material:'메리노 울 100%',fit:'머리둘레 약 56–60cm',care:'울 전용 세제로 손세탁',origin:'대한민국'},
+    {id:12,name:'퀼팅 라이너 베스트',price:119000,color:'#727a6e',icon:'hoodie',desc:'가벼운 보온 충전재를 넣은 레이어링 베스트. 코트 안에 입거나 셔츠 위에 걸쳐도 좋습니다.',material:'겉감 나일론 100% · 충전재 폴리에스터',fit:'레귤러 핏 · 두께 보통',care:'세탁망에 넣어 약한 코스 세탁',origin:'대한민국'}],
+  users:[
+    {id:1,username:'user1',password:'pass1234',name:'김유저',email:'user1@test.local',role:'user'},
+    {id:2,username:'admin',password:'admin1234',name:'관리자',email:'admin@test.local',role:'admin'}],
+  reviews:[
+    {id:1,productId:1,author:'minji',rating:5,text:'생각보다 두툼하고 핏이 좋아요.'},
+    {id:2,productId:2,author:'user1',rating:4,text:'따뜻하고 좋은데 소매가 조금 길어요.'},
+    {id:3,productId:3,author:'jun',rating:5,text:'사이즈 정사이즈, 재질 만족합니다.'}],
+  orders:[
+    {id:1001,user:'user1',productId:2,name:'오버핏 헤비 후드티',price:69000,date:'2026-11-02'},
+    {id:1002,user:'admin',productId:7,name:'울 블렌드 롱코트',price:189000,date:'2026-11-10'}]
+}}
+let db=JSON.parse(localStorage.getItem(DB_KEY)||'null');
+if(!db){db=seed();saveDB()} else { const catalog=seed().products; catalog.forEach(p=>{const old=db.products.find(x=>x.id===p.id);if(!old)db.products.push(p);else Object.assign(old,{material:p.material,fit:p.fit,care:p.care,origin:p.origin})}); saveDB() }
+function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db))}
+function getSession(){try{return JSON.parse(localStorage.getItem(SES_KEY))}catch(e){return null}}
+function resetDB(){if(confirm('모의 DB와 세션을 초기화할까요?')){db=seed();saveDB();localStorage.removeItem(SES_KEY);route()}}
+
+/* ===== Security Monitor ===== */
+const PATTERNS=[
+  ['XSS: <script> 태그',/<\s*script/i],['XSS: 이벤트 핸들러(onerror/onload 등)',/\bon(error|load|click|mouseover|focus)\s*=/i],
+  ['XSS: alert() 호출',/alert\s*\(/i],['XSS: javascript: 스킴',/javascript\s*:/i],
+  ['XSS: 위험 태그(img/svg/iframe)',/<\s*(img|svg|iframe|object|embed)/i],['쿠키/스토리지 접근',/document\.(cookie|domain)|localStorage/i],
+  ['SQLi 패턴',/('|")\s*or\s*('|"|\d)\s*=|union\s+select|--\s*$/i]];
+let logs=JSON.parse(localStorage.getItem(LOG_KEY)||'[]');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function detect(source,value){
+  if(!value)return false;
+  const hits=PATTERNS.filter(p=>p[1].test(value)).map(p=>p[0]);
+  hits.forEach(h=>logEvent(h,source,value));
+  return hits.length>0;
+}
+function logEvent(type,source,value,level){
+  const e={type,source,value:String(value||'').slice(0,300),level:level||'alert',time:new Date().toLocaleTimeString('ko-KR')};
+  logs.unshift(e);logs=logs.slice(0,100);
+  localStorage.setItem(LOG_KEY,JSON.stringify(logs));renderLogs();sendWebhook(e);
+}
+function renderLogs(){
+  $('#cnt').textContent=logs.length;
+  $('#logs').innerHTML=logs.length?logs.map(l=>`<div class="lg ${l.level}"><b>${esc(l.type)}</b><small>${esc(l.time)} · 위치: ${esc(l.source)}</small><code>${esc(l.value)}</code></div>`).join(''):'<div style="color:#7c8aa0">탐지된 항목이 없습니다.</div>';
+}
+function clearLogs(){logs=[];localStorage.removeItem(LOG_KEY);renderLogs()}
+function saveWebhook(){
+  const u=$('#wh').value.trim();
+  if(u&&!/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(u)){$('#wst').textContent='Discord Webhook URL 형식이 아닙니다.';return}
+  localStorage.setItem(WH_KEY,u);$('#wst').textContent=u?'저장됨. 이후 탐지 시 알림을 전송합니다.':'Webhook이 해제되었습니다.';
+}
+function postWebhook(content){
+  const u=localStorage.getItem(WH_KEY);if(!u)return Promise.reject(new Error('URL 없음'));
+  return fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'Security Monitor',content:content.slice(0,1900),allowed_mentions:{parse:[]}})});
+}
+function sendWebhook(e){
+  if(!localStorage.getItem(WH_KEY))return;
+  const v=e.value.replace(/```/g,"'''").slice(0,500);
+  postWebhook(`🚨 **${e.type}**\n위치: ${e.source}\n시각: ${e.time}\n입력값:\n\`\`\`\n${v}\n\`\`\``)
+    .then(r=>{$('#wst').textContent=r.ok||r.status===204?'알림 전송 성공 ('+e.time+')':'전송 실패: HTTP '+r.status})
+    .catch(err=>{$('#wst').textContent='전송 오류: '+err.message});
+}
+function testWebhook(){
+  saveWebhook();
+  postWebhook('✅ Security Monitor 테스트 알림입니다.').then(r=>{$('#wst').textContent=r.ok?'테스트 성공':'실패: HTTP '+r.status}).catch(e=>{$('#wst').textContent='오류: '+e.message});
+}
+
+/* ===== 라우터 / 뷰 ===== */
+const tile=(p,cls)=>`<div class="tile" style="background:${p.color}"><svg viewBox="0 0 120 112"><path d="${ICON[p.icon]}"/></svg></div>`;
+const seen=new Set();
+function checkTamper(){
+  const s=getSession();if(!s)return;
+  const u=db.users.find(x=>x.username===s.username);
+  if(u&&u.role!==s.role){const k=s.username+s.role;if(!seen.has(k)){seen.add(k);logEvent('권한 변조 의심(role 값 불일치)','localStorage.session',JSON.stringify(s))}}
+}
+function drawNav(h){
+  const s=getSession();
+  $('#nav').innerHTML=`<a href="#shop" class="${h==='shop'?'on':''}">상품</a>`+
+   (s?`<a href="#mypage" class="${h==='mypage'?'on':''}">마이페이지</a><a href="#" onclick="logout();return false">로그아웃</a><span class="who">${esc(s.username)}</span>`:`<a href="#login" class="${h==='login'?'on':''}">로그인</a>`)+
+   `<button class="hid" onclick="location.hash='admin'" aria-label="admin">●</button>`;
+}
+function route(){
+  const raw=location.hash.slice(1)||'shop';const i=raw.indexOf('/');
+  const page=i<0?raw:raw.slice(0,i),arg=i<0?'':raw.slice(i+1);
+  checkTamper();drawNav(page);
+  ({shop:()=>vShop(decodeURIComponent(arg)),product:()=>vProduct(+arg),login:vLogin,mypage:vMy,admin:()=>isAdminUnlocked()?vAdmin():vAdminGate(),'admin-gate':vAdminGate}[page]||(()=>vShop('')))();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+
+function vShop(q){
+  const list=q?db.products.filter(p=>p.name.includes(q)):db.products;
+  $('#app').innerHTML=`<section class="hero"><h1>오래 입을수록 편해지는 기본 옷.</h1><p>가을·겨울 기본 아이템 12종을 만나보세요.</p></section>
+  <form class="search" onsubmit="return doSearch(event)"><input id="q" placeholder="상품 검색 (예: 후드)" autocomplete="off"><button class="btn">검색</button></form>
+  <div class="info" id="info">전체 상품 ${db.products.length}종 · 매일 입기 좋은 기본 아이템</div>
+  <div class="grid">${list.map(p=>`<div class="card" onclick="location.hash='product/${p.id}'">${tile(p)}<h3>${p.name}</h3><span>${won(p.price)}</span></div>`).join('')}</div>`;
+  $('#q').value=q;
+  if(q){
+    detect('상품 검색창',q);
+    $('#info').innerHTML=`'${q}' 검색 결과 ${list.length}건`; /* VULN: Reflected XSS (innerHTML) */
+  }
+}
+function doSearch(e){
+  e.preventDefault();const q=$('#q').value.trim();
+  const h='#shop/'+encodeURIComponent(q);
+  if(q&&location.hash===h)route();else location.hash=q?h:'#shop';
+  return false;
+}
+function vProduct(id){
+  const p=db.products.find(x=>x.id===id);
+  if(!p){location.hash='shop';return}
+  const rv=db.reviews.filter(r=>r.productId===id);
+  const s=getSession();
+  $('#app').innerHTML=`<p><a href="#shop" style="color:var(--mute)">← 상품 목록</a></p>
+  <div class="detail">${tile(p)}<div><h2>${p.name}</h2><p class="price">${won(p.price)}</p><p>${p.desc}</p><p><b>소재</b> · ${p.material||'면 혼방 소재'}<br><b>핏 · 사이즈</b> · ${p.fit||'상세 사이즈는 문의해 주세요'}<br><b>관리 방법</b> · ${p.care||'케어라벨 참고'}<br><b>제조국</b> · ${p.origin||'대한민국'}</p><button class="btn" onclick="order(${p.id})">주문하기</button></div></div>
+  <h3>리뷰 ${rv.length}</h3>
+  <div>${rv.map(r=>`<div class="rv"><b>${r.author}</b><small>${'★'.repeat(r.rating)}</small><p>${r.text}</p></div>`).join('')||'<p style="color:var(--mute)">첫 리뷰를 남겨보세요.</p>'}</div>
+  <h3 style="margin-top:28px">리뷰 작성</h3>
+  <form class="box" onsubmit="return addReview(event,${id})">
+    <input id="rAuthor" placeholder="닉네임" value="${s?s.username:''}">
+    <select id="rRate"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option></select>
+    <textarea id="rText" rows="3" placeholder="리뷰 내용"></textarea>
+    <button class="btn">리뷰 등록</button>
+  </form>`;
+}
+function addReview(e,pid){
+  e.preventDefault();
+  const author=$('#rAuthor').value.trim()||'익명',text=$('#rText').value;
+  if(!text.trim())return false;
+  detect('리뷰 작성(닉네임)',author);detect('리뷰 작성(본문)',text);
+  db.reviews.push({id:Date.now(),productId:pid,author,rating:+$('#rRate').value,text}); /* VULN: 이스케이프 없이 저장/렌더 → Stored XSS */
+  saveDB();vProduct(pid);return false;
+}
+function order(pid){
+  const s=getSession();if(!s){alert('로그인 후 주문할 수 있습니다.');location.hash='login';return}
+  const p=db.products.find(x=>x.id===pid);
+  db.orders.push({id:1000+db.orders.length+1,user:s.username,productId:pid,name:p.name,price:p.price,date:new Date().toISOString().slice(0,10)});
+  saveDB();alert('주문이 접수되었습니다.');location.hash='mypage';
+}
+function vLogin(){
+  $('#app').innerHTML=`<div class="panel"><h2>로그인</h2>
+  <form class="box" onsubmit="return doLogin(event)"><input id="lu" placeholder="아이디 (user1 / admin)" autocomplete="off"><input id="lp" type="password" placeholder="비밀번호"><div class="err" id="lerr"></div><button class="btn">로그인</button></form>
+  <p style="color:var(--mute);font-size:13px">테스트 계정: user1 / pass1234 · admin / admin1234</p></div>`;
+}
+function doLogin(e){
+  e.preventDefault();const u=$('#lu').value.trim(),p=$('#lp').value;
+  detect('로그인(아이디)',u);detect('로그인(비밀번호)',p);
+  const f=db.users.find(x=>x.username===u&&x.password===p);
+  if(!f){$('#lerr').textContent='아이디 또는 비밀번호가 올바르지 않습니다.';logEvent('로그인 실패','로그인',u,'info');return false}
+  localStorage.setItem(SES_KEY,JSON.stringify({username:f.username,name:f.name,role:f.role})); /* VULN: role을 클라이언트에 저장 */
+  location.hash='mypage';return false;
+}
+function logout(){localStorage.removeItem(SES_KEY);location.hash='shop';route()}
+function vMy(){
+  const s=getSession();if(!s){location.hash='login';return}
+  const mine=db.orders.filter(o=>o.user===s.username);
+  /* VULN: 권한 판단을 localStorage의 role 값만으로 수행 */
+  $('#app').innerHTML=`<h2>마이페이지</h2>
+  <p>${esc(s.name)} 님 <span class="tag ${s.role==='admin'?'admin':''}">${esc(s.role)}</span></p>
+  ${s.role==='admin'?'<p><a class="btn sm" href="#admin">관리자 대시보드</a></p>':''}
+  <h3>주문 내역</h3>
+  <table><tr><th>주문번호</th><th>상품</th><th>금액</th><th>일자</th></tr>${mine.map(o=>`<tr><td>${o.id}</td><td>${o.name}</td><td>${won(o.price)}</td><td>${o.date}</td></tr>`).join('')||'<tr><td colspan="4" style="color:var(--mute)">주문 내역이 없습니다.</td></tr>'}</table>`;
+}
+const ADMIN_PIN='654321',ADMIN_FAIL_KEY='ht_admin_failures',ADMIN_LOCK_KEY='ht_admin_locked_until',ADMIN_OK_KEY='ht_admin_unlocked';
+function isAdminUnlocked(){return sessionStorage.getItem(ADMIN_OK_KEY)==='1'}
+function vAdminGate(){
+ const until=Number(localStorage.getItem(ADMIN_LOCK_KEY)||0),left=Math.max(0,until-Date.now());
+ $('#app').innerHTML=`<div class="panel"><h2>관리자 페이지</h2><p style="color:var(--mute)">관리자 전용 6자리 번호를 입력하세요.</p><form class="box" onsubmit="return checkAdminPin(event)"><input id="adminPin" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6자리 번호" aria-label="관리자 전용 번호"><div class="err" id="adminErr">${left?'입력 시도 잠금 중입니다. 약 '+Math.ceil(left/1000)+'초 후 다시 시도해 주세요.':''}</div><button class="btn" id="adminSubmit" ${left?'disabled':''}>확인</button></form></div>`;
+}
+function checkAdminPin(e){
+ e.preventDefault(); const now=Date.now(),until=Number(localStorage.getItem(ADMIN_LOCK_KEY)||0),err=$('#adminErr');
+ if(until>now){err.textContent='입력 시도 잠금 중입니다. 약 '+Math.ceil((until-now)/1000)+'초 후 다시 시도해 주세요.';return false}
+ if($('#adminPin').value===ADMIN_PIN){localStorage.removeItem(ADMIN_FAIL_KEY);localStorage.removeItem(ADMIN_LOCK_KEY);sessionStorage.setItem(ADMIN_OK_KEY,'1');location.hash='admin';return false}
+ const fails=Number(localStorage.getItem(ADMIN_FAIL_KEY)||0)+1;
+ if(fails>=3){localStorage.setItem(ADMIN_FAIL_KEY,'0');localStorage.setItem(ADMIN_LOCK_KEY,String(now+180000));err.textContent='번호를 3회 잘못 입력해 3분간 잠겼습니다.';$('#adminPin').disabled=true;$('#adminSubmit').disabled=true}
+ else{localStorage.setItem(ADMIN_FAIL_KEY,String(fails));err.textContent='번호가 올바르지 않습니다. 남은 시도: '+(3-fails)+'회'}
+ logEvent('관리자 번호 입력 실패','#admin-gate','실패 횟수 '+fails,'info');return false;
+}
+function vAdmin(){
+ const fakeOrders=[{id:'S-260118-01',customer:'박서연',product:'캐시미어 머플러',amount:89000,status:'결제 완료'},{id:'S-260118-02',customer:'이도윤',product:'퀼팅 라이너 베스트',amount:119000,status:'상품 준비중'},{id:'S-260117-14',customer:'최하은',product:'에센셜 코튼 티셔츠',amount:29000,status:'배송중'},{id:'S-260117-13',customer:'정민준',product:'코듀로이 셔츠 재킷',amount:89000,status:'결제 완료'}];
+ const fakeCustomers=[{name:'박서연',email:'seoyeon.park@example.test',joined:'2026-10-04',orders:4},{name:'이도윤',email:'doyoon.lee@example.test',joined:'2026-10-19',orders:2},{name:'최하은',email:'haeun.choi@example.test',joined:'2026-11-02',orders:3},{name:'정민준',email:'minjun.jung@example.test',joined:'2026-11-14',orders:1}];
+ const newProducts=db.products.slice(-4);
+ $('#app').innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>관리자 대시보드</h2><p style="color:var(--mute);margin-top:0">아래 주문·고객 정보는 화면 예시용 가상 데이터입니다.</p></div><button class="btn ghost" onclick="sessionStorage.removeItem(ADMIN_OK_KEY);location.hash='admin-gate'">나가기</button></div>
+ <div class="grid" style="margin:24px 0"><div class="tag" style="padding:18px">오늘 주문 <b style="display:block;font-size:24px">18건</b></div><div class="tag" style="padding:18px">이번 달 주문 <b style="display:block;font-size:24px">246건</b></div><div class="tag" style="padding:18px">가상 매출 <b style="display:block;font-size:24px">₩18,420,000</b></div><div class="tag" style="padding:18px">등록 고객 <b style="display:block;font-size:24px">1,284명</b></div></div>
+ <h3>최근 주문 <small style="color:var(--mute);font-weight:400">가상 예시</small></h3><table><tr><th>주문번호</th><th>고객</th><th>상품</th><th>금액</th><th>상태</th></tr>${fakeOrders.map(o=>`<tr><td>${o.id}</td><td>${o.customer}</td><td>${o.product}</td><td>${won(o.amount)}</td><td>${o.status}</td></tr>`).join('')}</table>
+ <h3>고객 정보 <small style="color:var(--mute);font-weight:400">가상 예시</small></h3><table><tr><th>이름</th><th>이메일</th><th>가입일</th><th>주문</th></tr>${fakeCustomers.map(c=>`<tr><td>${c.name}</td><td>${c.email}</td><td>${c.joined}</td><td>${c.orders}건</td></tr>`).join('')}</table>
+ <h3>신제품 정보</h3><table><tr><th>상품명</th><th>가격</th><th>소재</th><th>핏 / 특징</th></tr>${newProducts.map(p=>`<tr><td>${p.name}</td><td>${won(p.price)}</td><td>${p.material||'면 혼방'}</td><td>${p.fit||p.desc}</td></tr>`).join('')}</table>`;
+}
+
+/* 초기화 */
+$('#wh').value=localStorage.getItem(WH_KEY)||'';
+renderLogs();route();
+</script>
+</body>
+</html>
